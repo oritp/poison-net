@@ -19,12 +19,12 @@ The tool allows you to:
 
 ## ⚙️ Requirements and Installation
 
-### 1. System Requirements
-- **Operating System:** Linux (Debian or Ubuntu recommended).
-- **Python Version:** 3.8 or higher.
+### 1. System requirements
+- **Operating system:** Linux (Debian or Ubuntu recommended).
+- **Python version:** 3.8 or higher.
 - **Privileges:** Root or `sudo` access required for ARP/DNS operations.
 
-### 2. Install Dependencies
+### 2. Install dependencies
 
 You need to install the `scapy` library:
 
@@ -32,7 +32,7 @@ You need to install the `scapy` library:
     sudo apt install python3-pip
     pip install scapy
 
-### 3. Clone the Repository
+### 3. Clone the repository
 
 Then, clone the repository to your system:
 
