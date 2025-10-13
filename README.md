@@ -33,7 +33,7 @@ The tool allows you to:
 
 ### 1. System requirements
 - **Operating system:** Linux (Debian or Ubuntu recommended).
-- **Python version:** 3.8 or higher.
+- **Python version:** 3.7 or higher.
 - **Privileges:** Root or `sudo` access required for ARP/DNS operations.
 
 ### 2. Install dependencies
