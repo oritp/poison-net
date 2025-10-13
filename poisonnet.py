@@ -1,3 +1,12 @@
+from poisonnet_lib import (
+    get_interface,
+    start_arp_spoofing,
+    start_dns_spoofing,
+    start_sniffing,
+    restore_arp,
+    restore_dns
+)
+
 def main():
     print("""
     ===========================
