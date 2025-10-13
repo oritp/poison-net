@@ -55,7 +55,7 @@ Then, clone the repository to your system:
 
 To run the tool do the following:
 
-    sudo python3 poison-tool.py
+    sudo python3 poisonnet.py
 
 
 ## 🌐​ Usage
