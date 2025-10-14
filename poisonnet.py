@@ -23,13 +23,13 @@ def main():
     while True:
         option = input("Select an option: ")
         if option == "1":
-            print("\n[+] You choose ARP spoofing.")
+            print("\n[+] You chose ARP spoofing.")
             target_ip = input("Enter the target IP: ")
             gateway_ip = input("Enter the router IP: ")
             interface = get_interface()
             start_arp_spoofing(target_ip, gateway_ip, interface)
         elif option == "2":
-            print("\n[+] You choose DNS spoofing.")
+            print("\n[+] You chose DNS spoofing.")
             target_ip = input("Enter the target IP: ")
             gateway_ip = input("Enter the router IP: ")
             fake_ip = input("Enter the chosen IP: ")
@@ -37,19 +37,19 @@ def main():
             start_arp_spoofing(target_ip, gateway_ip, interface)
             start_dns_spoofing(interface, target_ip, fake_ip)
         elif option == "3":
-            print("\n[+] You choose ARP and DNS sniffing.")
+            print("\n[+] You chose ARP and DNS sniffing.")
             target_ip = input("Enter the target IP: ")
             gateway_ip = input("Enter the router IP: ")
             interface = get_interface()
             start_arp_spoofing(target_ip, gateway_ip, interface)
             start_sniffing(interface, target_ip)
         elif option == "4":
-            print("\n[+] You choose ARP restoring.")
+            print("\n[+] You chose ARP restoring.")
             target_ip = input("Enter the target IP: ")
             gateway_ip = input("Enter the router IP: ")
             restore_arp(target_ip, gateway_ip)
         elif option == "5":
-            print("\n[+] You choose DNS restoring.")
+            print("\n[+] You chose DNS restoring.")
             restore_dns()
         elif option == "6":
             print("[+] Exiting... See you soon!\n")
