@@ -52,7 +52,7 @@ def main():
             print("\nYou choose DNS restoring.")
             restore_dns()
         elif option == "6":
-            print("Exiting...")
+            print("Exiting... See you soon!\n")
             break
         else:
             print("[!] Invalid option.")
