@@ -129,6 +129,7 @@ def restore_dns():
     print("[+] DNS rules restored.")
 
 def arp_dns_sniffing(interface):
+    """ Sniff the ARP ams DNS traffic """
     print(f"[+] Starting packet capture on {interface}...")
     try:
         sniff(iface=interface, prn=process_packet, store=False)
